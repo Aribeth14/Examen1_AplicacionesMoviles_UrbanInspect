@@ -1,21 +1,44 @@
 import { Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import {IonButton,IonContent,IonHeader,IonInfiniteScroll,IonInfiniteScrollContent,IonRefresher,IonRefresherContent,
-  IonSpinner,IonTitle,IonToolbar,} from '@ionic/angular';
+import {
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
+  IonRefresher,
+  IonRefresherContent,
+  IonSpinner,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/angular';
 import { CONFIG } from '../config';
-import { Incidencia } from '../models';
+import type { Incidencia } from '../models';
 import { IncidenciasService } from '../services/incidencias.service';
 import { IncidenciaItemComponent } from '../shared/incidencia-item.component';
 
 @Component({
   selector: 'app-incidencias',
   standalone: true,
-  imports: [IonHeader,IonToolbar,IonTitle,IonContent,IonInfiniteScroll,IonInfiniteScrollContent,IonRefresher,
-    IonRefresherContent,IonSpinner,IonButton,IncidenciaItemComponent,],
+  imports: [
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonIcon,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
+    IonRefresher,
+    IonRefresherContent,
+    IonSpinner,
+    IonButton,
+    IncidenciaItemComponent,
+  ],
   template: `
     <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Incidencias</ion-title>
+      <ion-toolbar>
+        <ion-title>Incidencias Reportadas</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -24,32 +47,52 @@ import { IncidenciaItemComponent } from '../shared/incidencia-item.component';
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      @for (i of items(); track i.id) {
-        <app-incidencia-item [inc]="i"></app-incidencia-item>
-      }
+      <div class="app-container">
+        @for (i of items(); track i.id) {
+          <app-incidencia-item [inc]="i"></app-incidencia-item>
+        }
 
-      @if (cargando() && items().length === 0) {
-        <div class="ion-text-center ion-padding"><ion-spinner></ion-spinner></div>
-      }
+        @if (cargando() && items().length === 0) {
+          <div class="estado-vacio">
+            <ion-spinner color="primary"></ion-spinner>
+            <p class="estado-vacio-desc" style="margin-top: 10px;">Cargando incidencias...</p>
+          </div>
+        }
 
-      @if (!cargando() && !error() && items().length === 0) {
-        <p class="ion-padding ion-text-center">No hay incidencias registradas.</p>
-      }
+        @if (!cargando() && !error() && items().length === 0) {
+          <div class="estado-vacio">
+            <ion-icon name="list-outline" class="estado-vacio-icon"></ion-icon>
+            <h3 class="estado-vacio-title">No hay incidencias</h3>
+            <p class="estado-vacio-desc">No existen reportes registrados actualmente.</p>
+          </div>
+        }
 
-      @if (error()) {
-        <div class="ion-padding ion-text-center">
-          <p>No se pudo consultar el servicio de incidencias.</p>
-          <ion-button (click)="cargar()">Reintentar</ion-button>
-        </div>
-      }
+        @if (error()) {
+          <div class="estado-vacio">
+            <ion-icon name="alert-circle-outline" class="estado-vacio-icon" color="danger"></ion-icon>
+            <h3 class="estado-vacio-title">Error al consultar</h3>
+            <p class="estado-vacio-desc">No se pudo consultar el servicio de incidencias.</p>
+            <ion-button fill="outline" color="primary" (click)="cargar()">
+              <ion-icon slot="start" name="refresh-outline"></ion-icon>
+              Reintentar
+            </ion-button>
+          </div>
+        }
 
-      @if (fin() && items().length > 0) {
-        <p class="ion-text-center"><small>No hay más incidencias</small></p>
-      }
+        @if (fin() && items().length > 0) {
+          <div class="fin-lista">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>No hay más incidencias para mostrar</span>
+          </div>
+        }
 
-      <ion-infinite-scroll (ionInfinite)="cargar($event)" [disabled]="fin()">
-        <ion-infinite-scroll-content loadingText="Cargando más..."></ion-infinite-scroll-content>
-      </ion-infinite-scroll>
+        <ion-infinite-scroll (ionInfinite)="cargar($event)" [disabled]="fin()">
+          <ion-infinite-scroll-content
+            loadingSpinner="bubbles"
+            loadingText="Cargando más incidencias..."
+          ></ion-infinite-scroll-content>
+        </ion-infinite-scroll>
+      </div>
     </ion-content>
   `,
 })

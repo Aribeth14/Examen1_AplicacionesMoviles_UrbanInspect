@@ -7,11 +7,10 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonIcon,
 } from '@ionic/angular';
-import { COLOR_ESTADO, ETIQUETA_ESTADO, Incidencia, etiquetaTipo } from '../models';
+import { COLOR_ESTADO, ETIQUETA_ESTADO, type Incidencia, etiquetaTipo } from '../models';
 import { SeguimientoService } from '../services/seguimiento.service';
 
 @Component({
@@ -20,7 +19,6 @@ import { SeguimientoService } from '../services/seguimiento.service';
   imports: [
     IonCard,
     IonCardHeader,
-    IonCardSubtitle,
     IonCardTitle,
     IonCardContent,
     IonBadge,
@@ -31,28 +29,55 @@ import { SeguimientoService } from '../services/seguimiento.service';
   ],
   template: `
     <ion-card class="inc" [routerLink]="['/detalle', inc().id]">
-      @if (inc().foto) {
-        <img class="inc-foto" [src]="inc().foto" alt="Fotografía de la incidencia" />
-      } @else {
-        <div class="inc-sinfoto">Sin fotografía</div>
-      }
+      <div class="inc-foto-container">
+        @if (inc().foto) {
+          <img class="inc-foto" [src]="inc().foto" alt="Fotografía de la incidencia" />
+        } @else {
+          <div class="inc-sinfoto">
+            <ion-icon name="image-outline"></ion-icon>
+            <span>Sin fotografía adjunta</span>
+          </div>
+        }
+      </div>
+
+      <div class="inc-header-chips">
+        <span class="inc-type-tag">
+          <ion-icon [name]="iconoTipo()"></ion-icon>
+          {{ tipo() }}
+        </span>
+        <span class="inc-codigo-tag">{{ inc().codigo }}</span>
+      </div>
+
       <ion-card-header>
-        <ion-card-subtitle>{{ inc().codigo }} - {{ tipo() }}</ion-card-subtitle>
         <ion-card-title>{{ inc().descripcion }}</ion-card-title>
       </ion-card-header>
+
       <ion-card-content>
         <dl class="datos">
-          <dt>Dirección</dt>
+          <dt>
+            <ion-icon name="location-outline"></ion-icon>
+            Dirección
+          </dt>
           <dd>{{ inc().direccion }}</dd>
-          <dt>Sector</dt>
+
+          <dt>
+            <ion-icon name="business-outline"></ion-icon>
+            Sector
+          </dt>
           <dd>{{ inc().sector }}</dd>
-          <dt>Fecha</dt>
+
+          <dt>
+            <ion-icon name="calendar-outline"></ion-icon>
+            Fecha
+          </dt>
           <dd>{{ inc().fecha | date: 'dd/MM/yyyy HH:mm' }}</dd>
         </dl>
+
         <div class="inc-pie">
           <ion-badge [color]="color()">{{ estado() }}</ion-badge>
           <ion-button
             fill="clear"
+            class="inc-bookmark-btn"
             aria-label="Marcar para seguimiento"
             (click)="marcar($event)"
           >
@@ -73,6 +98,23 @@ export class IncidenciaItemComponent {
   tipo = computed(() => etiquetaTipo(this.inc().tipo));
   estado = computed(() => ETIQUETA_ESTADO[this.inc().estado]);
   color = computed(() => COLOR_ESTADO[this.inc().estado]);
+
+  iconoTipo = computed(() => {
+    switch (this.inc().tipo) {
+      case 'luminaria':
+        return 'bulb-outline';
+      case 'bache':
+        return 'warning-outline';
+      case 'senalizacion':
+        return 'navigate-outline';
+      case 'alcantarilla':
+        return 'water-outline';
+      case 'parque':
+        return 'leaf-outline';
+      default:
+        return 'information-circle-outline';
+    }
+  });
 
   // stopPropagation evita que al tocar el marcador se abra el detalle
   marcar(ev: Event) {

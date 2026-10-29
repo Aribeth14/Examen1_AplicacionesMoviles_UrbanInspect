@@ -25,23 +25,5 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
-
-ion-button {
-  --border-radius: 10px;
-  min-height: 48px;
-}
-
-ion-note {
-  display: block;
-  margin: 4px 0 10px;
-}
+/* Custom UrbanInspect UI Design System */
+@import "./theme/ui-theme.scss";

@@ -2,9 +2,49 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController, IonApp, IonRouterOutlet } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, bookmark, bookmarkOutline, homeOutline, listOutline } from 'ionicons/icons';
-import { SeguimientoService } from './services/seguimiento.service';
+import {
+  addCircle,
+  addCircleOutline,
+  alertCircleOutline,
+  arrowForwardOutline,
+  bookmark,
+  bookmarkOutline,
+  bulbOutline,
+  businessOutline,
+  calendarOutline,
+  cameraOutline,
+  checkmarkCircle,
+  checkmarkCircleOutline,
+  checkmarkDoneCircle,
+  checkmarkDoneCircleOutline,
+  checkmarkOutline,
+  chevronForwardOutline,
+  closeCircleOutline,
+  cloudOutline,
+  construct,
+  constructOutline,
+  flashlightOutline,
+  home,
+  homeOutline,
+  imageOutline,
+  informationCircleOutline,
+  leafOutline,
+  list,
+  listOutline,
+  locationOutline,
+  navigateOutline,
+  rainyOutline,
+  refreshOutline,
+  sunnyOutline,
+  thermometerOutline,
+  time,
+  timeOutline,
+  trashOutline,
+  warningOutline,
+  waterOutline,
+} from 'ionicons/icons';
 import { BorradorService } from './services/borrador.service';
+import { SeguimientoService } from './services/seguimiento.service';
 
 @Component({
   selector: 'app-root',
@@ -24,7 +64,47 @@ export class AppComponent implements OnInit {
 
   constructor() {
     // Registro de los iconos que usa la app
-    addIcons({ homeOutline, listOutline, bookmark, bookmarkOutline, addCircleOutline });
+    addIcons({
+      home,
+      homeOutline,
+      list,
+      listOutline,
+      bookmark,
+      bookmarkOutline,
+      addCircle,
+      addCircleOutline,
+      time,
+      timeOutline,
+      construct,
+      constructOutline,
+      checkmarkDoneCircle,
+      checkmarkDoneCircleOutline,
+      checkmarkCircle,
+      checkmarkCircleOutline,
+      checkmarkOutline,
+      alertCircleOutline,
+      warningOutline,
+      locationOutline,
+      businessOutline,
+      calendarOutline,
+      cameraOutline,
+      imageOutline,
+      trashOutline,
+      refreshOutline,
+      navigateOutline,
+      cloudOutline,
+      sunnyOutline,
+      thermometerOutline,
+      rainyOutline,
+      informationCircleOutline,
+      arrowForwardOutline,
+      bulbOutline,
+      leafOutline,
+      waterOutline,
+      closeCircleOutline,
+      chevronForwardOutline,
+      flashlightOutline,
+    });
   }
 
   async ngOnInit() {

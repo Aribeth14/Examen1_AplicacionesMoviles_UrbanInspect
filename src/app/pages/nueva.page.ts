@@ -1,13 +1,33 @@
 import { ChangeDetectorRef, Component, inject, signal } from '@angular/core';
-import {FormBuilder,ReactiveFormsModule,ValidationErrors,ValidatorFn,Validators,} from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  type ValidationErrors,
+  type ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, firstValueFrom, merge } from 'rxjs';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
-import {AlertController,IonButton,IonCard,IonCardContent,IonContent,IonHeader,IonInput,IonNote,IonSelect,IonSelectOption,IonSpinner,IonTextarea,IonTitle,IonToolbar,} from '@ionic/angular';
+import {
+  AlertController,
+  IonBadge,
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonInput,
+  IonSelect,
+  IonSelectOption,
+  IonSpinner,
+  IonTextarea,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/angular';
 import { CONFIG } from '../config';
-import { Clima, Incidencia, Prioridad, TIPOS, Tipo, num } from '../models';
+import { type Clima, type Incidencia, type Prioridad, TIPOS, type Tipo, num } from '../models';
 import { BorradorService } from '../services/borrador.service';
 import { ClimaService } from '../services/clima.service';
 import { ImagenService } from '../services/imagen.service';
@@ -41,163 +61,343 @@ const validador: ValidatorFn = g => {
 @Component({
   selector: 'app-nueva',
   standalone: true,
-  imports: [ReactiveFormsModule,IonHeader,IonToolbar,IonTitle,IonContent,IonInput,IonTextarea,IonSelect,IonSelectOption,IonButton,IonNote,IonSpinner,IonCard,IonCardContent,],
+  imports: [
+    ReactiveFormsModule,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonInput,
+    IonTextarea,
+    IonSelect,
+    IonSelectOption,
+    IonButton,
+    IonIcon,
+    IonBadge,
+    IonSpinner,
+  ],
   template: `
     <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Nueva incidencia</ion-title>
+      <ion-toolbar>
+        <ion-title>Nueva Incidencia</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
-      <div [formGroup]="form">
-        <ion-select
-          formControlName="tipo"
-          label="Tipo *"
-          labelPlacement="stacked"
-          interface="action-sheet"
-          placeholder="Selecciona"
-        >
-          @for (t of tipos; track t.valor) {
-            <ion-select-option [value]="t.valor">{{ t.etiqueta }}</ion-select-option>
-          }
-        </ion-select>
-        @if (intentado() && form.controls.tipo.invalid) {
-          <ion-note color="danger">Selecciona el tipo.</ion-note>
-        }
+    <ion-content>
+      <div class="app-container" [formGroup]="form">
+        <!-- Tarjeta 1: Información General -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-header-icon">
+              <ion-icon name="information-circle-outline"></ion-icon>
+            </div>
+            <div>
+              <h3 class="panel-title">Información del Reporte</h3>
+              <p class="panel-subtitle">Detalles principales del problema urbano</p>
+            </div>
+          </div>
 
-        <ion-textarea
-          formControlName="descripcion"
-          label="Descripción *"
-          labelPlacement="stacked"
-          rows="3"
-        ></ion-textarea>
-        @if (intentado() && form.controls.descripcion.invalid) {
-          <ion-note color="danger">La descripción es obligatoria.</ion-note>
-        }
-
-        <ion-input formControlName="direccion" label="Dirección *" labelPlacement="stacked"></ion-input>
-        @if (intentado() && form.controls.direccion.invalid) {
-          <ion-note color="danger">La dirección es obligatoria.</ion-note>
-        }
-
-        <ion-input formControlName="sector" label="Sector *" labelPlacement="stacked"></ion-input>
-        @if (intentado() && form.controls.sector.invalid) {
-          <ion-note color="danger">El sector es obligatorio.</ion-note>
-        }
-
-        <ion-select
-          formControlName="prioridad"
-          label="Prioridad *"
-          labelPlacement="stacked"
-          interface="action-sheet"
-        >
-          <ion-select-option value="baja">Baja</ion-select-option>
-          <ion-select-option value="media">Media</ion-select-option>
-          <ion-select-option value="alta">Alta (foto obligatoria)</ion-select-option>
-        </ion-select>
-
-        <h3>
-          Fotografía
-          @if (form.value.prioridad === 'alta') { <small>(obligatoria)</small> }
-        </h3>
-        @if (form.value.foto) {
-          <img [src]="form.value.foto" alt="Vista previa" style="width:100%;border-radius:8px" />
-        }
-        <ion-button expand="block" size="large" (click)="tomarFoto()">
-          {{ form.value.foto ? 'Repetir foto' : 'Tomar foto' }}
-        </ion-button>
-        @if (form.value.foto) {
-          <ion-button expand="block" fill="outline" color="medium" (click)="quitarFoto()">
-            Quitar foto
-          </ion-button>
-        }
-        @if (fotoDenegada()) {
-          <ion-note color="danger">
-            Sin permiso de cámara. Actívalo en los ajustes del teléfono para tomar la foto{{
-              form.value.prioridad === 'alta'
-                ? ' (sin ella no se puede guardar una incidencia de prioridad alta)'
-                : ''
-            }}.
-          </ion-note>
-        }
-        @if (intentado() && form.errors?.['fotoRequerida']) {
-          <ion-note color="danger">La fotografía es obligatoria para prioridad alta.</ion-note>
-        }
-
-        <h3>
-          Ubicación
-          @if (form.value.tipo === 'bache') { <small>(obligatoria para bache)</small> }
-        </h3>
-        <ion-button expand="block" size="large" (click)="usarGps()">Usar mi ubicación (GPS)</ion-button>
-        @if (gpsError()) {
-          <ion-note color="danger">{{ gpsError() }}</ion-note>
-        }
-        <ion-input
-          formControlName="lat"
-          label="Latitud"
-          labelPlacement="stacked"
-          inputmode="decimal"
-          placeholder="-0.180653"
-        ></ion-input>
-        <ion-input
-          formControlName="lng"
-          label="Longitud"
-          labelPlacement="stacked"
-          inputmode="decimal"
-          placeholder="-78.467834"
-        ></ion-input>
-        @if (intentado() && form.errors?.['coordsRequeridas']) {
-          <ion-note color="danger">
-            Para un bache la ubicación es obligatoria: usa el GPS o ingresa coordenadas.
-          </ion-note>
-        }
-        @if (form.errors?.['coordsIncompletas']) {
-          <ion-note color="danger">Ingresa latitud y longitud.</ion-note>
-        }
-        @if (form.errors?.['coordsInvalidas']) {
-          <ion-note color="danger">Coordenadas inválidas (latitud -90 a 90, longitud -180 a 180).</ion-note>
-        }
-
-        <h3>Clima del lugar</h3>
-        <ion-button
-          expand="block"
-          fill="outline"
-          [disabled]="!coords() || climaCargando()"
-          (click)="consultarClima()"
-        >
-          Consultar clima
-        </ion-button>
-        @if (climaCargando()) {
-          <ion-spinner></ion-spinner>
-        }
-        @if (climaVigente(); as c) {
-          <ion-card>
-            <ion-card-content>
-              <p>Temperatura: <b>{{ c.temperatura }} °C</b></p>
-              <p>Precipitación (última hora): <b>{{ c.precipitacion }} mm</b></p>
-              <p>Condición: <b>{{ c.descripcion }}</b></p>
-              @if (c.precipitacion > umbral) {
-                <p>
-                  <ion-note color="danger">
-                    ADVERTENCIA: lluvia superior a {{ umbral }} mm en la última hora. Las condiciones
-                    podrían dificultar el mantenimiento.
-                  </ion-note>
-                </p>
+          <div class="campo">
+            <ion-select
+              formControlName="tipo"
+              label="Tipo de incidencia *"
+              labelPlacement="stacked"
+              fill="outline"
+              interface="action-sheet"
+              placeholder="Selecciona el tipo"
+            >
+              @for (t of tipos; track t.valor) {
+                <ion-select-option [value]="t.valor">{{ t.etiqueta }}</ion-select-option>
               }
-            </ion-card-content>
-          </ion-card>
-        }
-        @if (climaError()) {
-          <ion-note color="warning">{{ climaError() }}</ion-note>
-        }
+            </ion-select>
+            @if (intentado() && form.controls.tipo.invalid) {
+              <div class="aviso-error">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>Selecciona el tipo de incidencia.</span>
+              </div>
+            }
+          </div>
 
-        <ion-button expand="block" size="large" color="success" [disabled]="enviando()" (click)="guardar()">
-          {{ enviando() ? 'Guardando...' : 'Guardar incidencia' }}
-        </ion-button>
-        <ion-button expand="block" fill="clear" color="medium" (click)="limpiar()">
-          Descartar formulario
-        </ion-button>
+          <div class="campo">
+            <ion-textarea
+              formControlName="descripcion"
+              label="Descripción detallada *"
+              labelPlacement="stacked"
+              fill="outline"
+              placeholder="Describe lo sucedido o el daño observado..."
+              rows="3"
+            ></ion-textarea>
+            @if (intentado() && form.controls.descripcion.invalid) {
+              <div class="aviso-error">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>La descripción es obligatoria.</span>
+              </div>
+            }
+          </div>
+
+          <div class="campo">
+            <ion-input
+              formControlName="direccion"
+              label="Dirección aproximada *"
+              labelPlacement="stacked"
+              fill="outline"
+              placeholder="Ej. Calle Los Álamos y Av. Principal"
+            ></ion-input>
+            @if (intentado() && form.controls.direccion.invalid) {
+              <div class="aviso-error">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>La dirección es obligatoria.</span>
+              </div>
+            }
+          </div>
+
+          <div class="campo">
+            <ion-input
+              formControlName="sector"
+              label="Sector o barrio *"
+              labelPlacement="stacked"
+              fill="outline"
+              placeholder="Ej. La Floresta / Centro Histórico"
+            ></ion-input>
+            @if (intentado() && form.controls.sector.invalid) {
+              <div class="aviso-error">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>El sector es obligatorio.</span>
+              </div>
+            }
+          </div>
+
+          <div class="campo">
+            <ion-select
+              formControlName="prioridad"
+              label="Nivel de prioridad *"
+              labelPlacement="stacked"
+              fill="outline"
+              interface="action-sheet"
+            >
+              <ion-select-option value="baja">Baja</ion-select-option>
+              <ion-select-option value="media">Media</ion-select-option>
+              <ion-select-option value="alta">Alta (requiere fotografía obligatoria)</ion-select-option>
+            </ion-select>
+          </div>
+        </section>
+
+        <!-- Tarjeta 2: Evidencia Fotográfica -->
+        <section class="panel">
+          <div class="panel-header" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="panel-header-icon">
+                <ion-icon name="camera-outline"></ion-icon>
+              </div>
+              <div>
+                <h3 class="panel-title">Evidencia Fotográfica</h3>
+                <p class="panel-subtitle">Captura imagen del estado actual</p>
+              </div>
+            </div>
+            @if (form.value.prioridad === 'alta') {
+              <ion-badge color="danger">Obligatoria</ion-badge>
+            }
+          </div>
+
+          @if (form.value.foto) {
+            <div class="foto-previa-wrap">
+              <img [src]="form.value.foto" alt="Vista previa" class="foto-previa" />
+            </div>
+            <div class="fila-2">
+              <ion-button expand="block" fill="outline" color="primary" (click)="tomarFoto()">
+                <ion-icon slot="start" name="camera-outline"></ion-icon>
+                Repetir foto
+              </ion-button>
+              <ion-button expand="block" fill="outline" color="medium" (click)="quitarFoto()">
+                <ion-icon slot="start" name="trash-outline"></ion-icon>
+                Quitar foto
+              </ion-button>
+            </div>
+          } @else {
+            <div class="foto-caja" (click)="tomarFoto()">
+              <ion-icon name="camera-outline" class="foto-caja-icon"></ion-icon>
+              <p class="foto-caja-text">Toca para tomar una fotografía</p>
+            </div>
+            <ion-button expand="block" color="primary" (click)="tomarFoto()">
+              <ion-icon slot="start" name="camera-outline"></ion-icon>
+              Tomar fotografía
+            </ion-button>
+          }
+
+          @if (fotoDenegada()) {
+            <div class="aviso-error" style="margin-top: 10px;">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>Sin permiso de cámara. Habilítalo en ajustes para tomar la fotografía.</span>
+            </div>
+          }
+          @if (intentado() && form.errors?.['fotoRequerida']) {
+            <div class="aviso-error" style="margin-top: 10px;">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>La fotografía es obligatoria para incidencias de prioridad alta.</span>
+            </div>
+          }
+        </section>
+
+        <!-- Tarjeta 3: Ubicación Geográfica -->
+        <section class="panel">
+          <div class="panel-header" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="panel-header-icon">
+                <ion-icon name="location-outline"></ion-icon>
+              </div>
+              <div>
+                <h3 class="panel-title">Ubicación Geográfica</h3>
+                <p class="panel-subtitle">Coordenadas del incidente</p>
+              </div>
+            </div>
+            @if (form.value.tipo === 'bache') {
+              <ion-badge color="warning">Obligatoria</ion-badge>
+            }
+          </div>
+
+          <ion-button expand="block" fill="outline" color="primary" style="margin-bottom: 14px;" (click)="usarGps()">
+            <ion-icon slot="start" name="navigate-outline"></ion-icon>
+            Obtener mi ubicación (GPS)
+          </ion-button>
+
+          @if (gpsError()) {
+            <div class="aviso-error" style="margin-bottom: 12px;">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>{{ gpsError() }}</span>
+            </div>
+          }
+
+          <div class="fila-2">
+            <div class="campo">
+              <ion-input
+                formControlName="lat"
+                label="Latitud"
+                labelPlacement="stacked"
+                fill="outline"
+                inputmode="decimal"
+                placeholder="-0.180653"
+              ></ion-input>
+            </div>
+            <div class="campo">
+              <ion-input
+                formControlName="lng"
+                label="Longitud"
+                labelPlacement="stacked"
+                fill="outline"
+                inputmode="decimal"
+                placeholder="-78.467834"
+              ></ion-input>
+            </div>
+          </div>
+
+          @if (intentado() && form.errors?.['coordsRequeridas']) {
+            <div class="aviso-error">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>Para un bache las coordenadas son obligatorias: usa GPS o ingrésalas manualmente.</span>
+            </div>
+          }
+          @if (form.errors?.['coordsIncompletas']) {
+            <div class="aviso-error">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>Ingresa tanto latitud como longitud.</span>
+            </div>
+          }
+          @if (form.errors?.['coordsInvalidas']) {
+            <div class="aviso-error">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>Coordenadas fuera de rango válido (-90 a 90, -180 a 180).</span>
+            </div>
+          }
+        </section>
+
+        <!-- Tarjeta 4: Verificación Climática -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-header-icon">
+              <ion-icon name="cloud-outline"></ion-icon>
+            </div>
+            <div>
+              <h3 class="panel-title">Condición Climática</h3>
+              <p class="panel-subtitle">Verifica el clima en la zona reportada</p>
+            </div>
+          </div>
+
+          <ion-button
+            expand="block"
+            fill="outline"
+            color="primary"
+            [disabled]="!coords() || climaCargando()"
+            (click)="consultarClima()"
+          >
+            <ion-icon slot="start" name="cloud-outline"></ion-icon>
+            {{ climaCargando() ? 'Consultando estación...' : 'Consultar clima del lugar' }}
+          </ion-button>
+
+          @if (climaCargando()) {
+            <div class="estado-vacio" style="padding: 16px;">
+              <ion-spinner color="primary"></ion-spinner>
+            </div>
+          }
+
+          @if (climaVigente(); as c) {
+            <div class="clima-card">
+              <div class="clima-header">
+                <ion-icon name="sunny-outline"></ion-icon>
+                <span>Reporte Meteorológico Actual</span>
+              </div>
+              <div class="clima-grid">
+                <div class="clima-item">
+                  <div class="clima-item-valor">{{ c.temperatura }} °C</div>
+                  <div class="clima-item-label">Temperatura</div>
+                </div>
+                <div class="clima-item">
+                  <div class="clima-item-valor">{{ c.precipitacion }} mm</div>
+                  <div class="clima-item-label">Precipitación</div>
+                </div>
+                <div class="clima-item">
+                  <div class="clima-item-valor" style="font-size: 0.95rem;">{{ c.descripcion }}</div>
+                  <div class="clima-item-label">Condición</div>
+                </div>
+              </div>
+
+              @if (c.precipitacion > umbral) {
+                <div class="aviso-lluvia">
+                  <ion-icon name="warning-outline"></ion-icon>
+                  <span>
+                    ADVERTENCIA: lluvia superior a {{ umbral }} mm en la última hora. Las condiciones
+                    podrían dificultar las labores de mantenimiento.
+                  </span>
+                </div>
+              }
+            </div>
+          }
+
+          @if (climaError()) {
+            <div class="aviso-error" style="margin-top: 10px; background: #fffbeb; color: #b45309;">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>{{ climaError() }}</span>
+            </div>
+          }
+        </section>
+
+        <!-- Acciones finales -->
+        <div style="margin-top: 10px; margin-bottom: 24px;">
+          <ion-button
+            expand="block"
+            size="large"
+            color="success"
+            [disabled]="enviando()"
+            (click)="guardar()"
+          >
+            <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+            {{ enviando() ? 'Guardando reporte...' : 'Guardar incidencia' }}
+          </ion-button>
+
+          <ion-button expand="block" fill="clear" color="medium" style="margin-top: 8px;" (click)="limpiar()">
+            <ion-icon slot="start" name="trash-outline"></ion-icon>
+            Descartar formulario
+          </ion-button>
+        </div>
       </div>
     </ion-content>
   `,
@@ -449,4 +649,3 @@ export class NuevaPage {
     this.cdr.markForCheck();
   }
 }
-

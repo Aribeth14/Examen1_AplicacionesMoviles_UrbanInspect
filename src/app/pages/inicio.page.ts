@@ -1,20 +1,49 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import {IonButton,IonCard,IonCardContent,IonCol,IonContent,IonGrid,IonHeader,IonRefresher,
-  IonRefresherContent,IonRow,IonSpinner,IonTitle,IonToolbar,} from '@ionic/angular';
+import {
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonCol,
+  IonContent,
+  IonGrid,
+  IonHeader,
+  IonIcon,
+  IonRefresher,
+  IonRefresherContent,
+  IonRow,
+  IonSpinner,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/angular';
 import { IncidenciasService } from '../services/incidencias.service';
 import { SeguimientoService } from '../services/seguimiento.service';
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [IonHeader,IonToolbar,IonTitle,IonContent,IonCard,IonCardContent,IonGrid,IonRow,
-    IonCol,IonButton,IonSpinner,IonRefresher,IonRefresherContent,RouterLink,],
+  imports: [
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonCard,
+    IonCardContent,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonButton,
+    IonIcon,
+    IonSpinner,
+    IonRefresher,
+    IonRefresherContent,
+    RouterLink,
+  ],
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Inicio</ion-title>
+        <ion-title>UrbanInspect</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -24,10 +53,15 @@ import { SeguimientoService } from '../services/seguimiento.service';
       </ion-refresher>
 
       <div class="hero">
-        <img class="hero-logo" src="assets/logo-app.jpg" alt="Logotipo de UrbanInspect" />
-        <div>
-          <h1>UrbanInspect</h1>
-          <p>Reporta y mejora tu ciudad</p>
+        <div class="hero-content">
+          <div class="hero-logo-box">
+            <img class="hero-logo" src="assets/icon/logo.jpg" alt="Logotipo de UrbanInspect" />
+          </div>
+          <div class="hero-text">
+            <div class="hero-tag">Gestión Ciudadana</div>
+            <h1>UrbanInspect</h1>
+            <p>Reporta y mejora tu ciudad</p>
+          </div>
         </div>
       </div>
 
@@ -37,7 +71,12 @@ import { SeguimientoService } from '../services/seguimiento.service';
             <ion-col size="6">
               <ion-card class="stat stat--pendiente">
                 <ion-card-content>
-                  <div class="stat-n">{{ r.pendiente }}</div>
+                  <div class="stat-header">
+                    <div class="stat-n">{{ r.pendiente }}</div>
+                    <div class="stat-icon">
+                      <ion-icon name="time-outline"></ion-icon>
+                    </div>
+                  </div>
                   <div class="stat-l">Pendientes</div>
                 </ion-card-content>
               </ion-card>
@@ -45,7 +84,12 @@ import { SeguimientoService } from '../services/seguimiento.service';
             <ion-col size="6">
               <ion-card class="stat stat--proceso">
                 <ion-card-content>
-                  <div class="stat-n">{{ r.en_proceso }}</div>
+                  <div class="stat-header">
+                    <div class="stat-n">{{ r.en_proceso }}</div>
+                    <div class="stat-icon">
+                      <ion-icon name="construct-outline"></ion-icon>
+                    </div>
+                  </div>
                   <div class="stat-l">En proceso</div>
                 </ion-card-content>
               </ion-card>
@@ -55,7 +99,12 @@ import { SeguimientoService } from '../services/seguimiento.service';
             <ion-col size="6">
               <ion-card class="stat stat--resuelta">
                 <ion-card-content>
-                  <div class="stat-n">{{ r.resuelta }}</div>
+                  <div class="stat-header">
+                    <div class="stat-n">{{ r.resuelta }}</div>
+                    <div class="stat-icon">
+                      <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+                    </div>
+                  </div>
                   <div class="stat-l">Resueltas</div>
                 </ion-card-content>
               </ion-card>
@@ -63,7 +112,12 @@ import { SeguimientoService } from '../services/seguimiento.service';
             <ion-col size="6">
               <ion-card class="stat stat--seguimiento">
                 <ion-card-content>
-                  <div class="stat-n">{{ seg.codigos().length }}</div>
+                  <div class="stat-header">
+                    <div class="stat-n">{{ seg.codigos().length }}</div>
+                    <div class="stat-icon">
+                      <ion-icon name="bookmark-outline"></ion-icon>
+                    </div>
+                  </div>
                   <div class="stat-l">En seguimiento</div>
                 </ion-card-content>
               </ion-card>
@@ -73,21 +127,32 @@ import { SeguimientoService } from '../services/seguimiento.service';
       }
 
       @if (cargando()) {
-        <div class="estado-vacio"><ion-spinner></ion-spinner></div>
+        <div class="estado-vacio">
+          <ion-spinner color="primary"></ion-spinner>
+          <p class="estado-vacio-desc" style="margin-top: 10px;">Actualizando indicadores...</p>
+        </div>
       }
 
       @if (error()) {
         <div class="estado-vacio">
-          <p>No se pudieron cargar los indicadores.</p>
-          <ion-button (click)="cargar()">Reintentar</ion-button>
+          <ion-icon name="alert-circle-outline" class="estado-vacio-icon" color="danger"></ion-icon>
+          <h3 class="estado-vacio-title">Error de conexión</h3>
+          <p class="estado-vacio-desc">No se pudieron cargar los indicadores municipales.</p>
+          <ion-button fill="outline" color="primary" (click)="cargar()">
+            <ion-icon slot="start" name="refresh-outline"></ion-icon>
+            Reintentar
+          </ion-button>
         </div>
       }
 
       <div class="acciones">
-        <ion-button expand="block" size="large" routerLink="/tabs/nueva">
+        <div class="acciones-titulo">Acciones principales</div>
+        <ion-button expand="block" size="large" color="primary" routerLink="/tabs/nueva">
+          <ion-icon slot="start" name="add-circle-outline"></ion-icon>
           Registrar incidencia
         </ion-button>
-        <ion-button expand="block" size="large" fill="outline" routerLink="/tabs/incidencias">
+        <ion-button expand="block" size="large" fill="outline" color="primary" routerLink="/tabs/incidencias">
+          <ion-icon slot="start" name="list-outline"></ion-icon>
           Ver incidencias
         </ion-button>
       </div>
